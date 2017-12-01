@@ -1,5 +1,6 @@
 import System.IO
 import System.Environment
+import Debug.Trace
 
 -- ********************************************************************************
 -- * @David, The compiled binary can be invoked as ./k_means k file_name -Jimmy
@@ -14,6 +15,63 @@ main = do
 -- **************************************************************************
 -- * @David, This is a stub. Please replace this with your K-means -Jimmy
 -- **************************************************************************
+-- place (1.0,1.0) (3.0,4.0) [[(3.0,4.0)]]
+--     result: [[(1.0,1.0),(3.0,4.0)]]
+place :: (Floating a, Ord a) => (a,a) -> (a,a) -> [[(a,a)]] -> [[(a,a)]]
+place p centroid [] = []
+place p centroid (e:r) 
+    | (centroid == (last e)) = (p:e):(place p centroid r)
+    | otherwise = e:(place p centroid r)
+
+-- take a set of points and a set of centroids
+-- returns the newly computed K sets of points
+-- kmeanse [(1.0,1.0),(3.0,4.0),(103.0,104.0)] [(0.0,0.0),(100.0,100.0)]
+kmeanse :: (Floating a, Ord a) => [(a,a)] -> [(a,a)] -> [[(a,a)]]
+kmeanse [] centroids = (foldr (\ x r -> ([x]:r)) [] centroids)
+kmeanse (e:r) centroids =
+    (place e (findmin e centroids 
+                 (dist e (head centroids)) 
+                 (head centroids)) 
+             (kmeanse r centroids))
+
+dist :: (Floating a, Ord a) => (a,a) -> (a,a) -> a
+dist (x1, y1) (x2, y2) = sqrt((x2-x1) * (x2-x1) + (y2-y1) * (y2-y1))
+
+centroidify :: (Floating a, Ord a) => [(a,a)] -> Int -> (a,a) -> (a,a)
+centroidify (e:r) n (accx,accy)
+    | (n == 0) = (accx, accy)
+    | (r == []) = (accx / (fromIntegral n), accy / (fromIntegral n))
+    | otherwise = centroidify r n (accx+(fst e), accy+(snd e))
+
+-- return the centroid of the cluster in which p belongs to
+findmin :: (Floating a, Ord a) => (a,a) -> [(a,a)] -> a -> (a,a) -> (a,a)
+findmin p [] min c = c
+findmin p (e:r) min c
+    | ((dist p e) < min) = findmin p r (dist p e) e
+    | otherwise = findmin p r min c
+
+canstop :: (Floating a, Ord a, Show a) => [(a,a)] -> [(a,a)] -> Bool
+canstop pre post
+    | 10.0 > dist (head pre) (head post) = True
+    | otherwise = trace (show [(head pre),(head post)]) False
+
+kmeansc :: (Floating a, Ord a, Show a) => [(a,a)] -> [(a,a)] -> Int -> [(a,a)]
+kmeansc points pre iter = kms points pre (foldr (\ x r -> ((centroidify x ((length x)-1) (0.0,0.0)):r)) [] (kmeanse points pre)) iter
+    where  
+        kms :: (Floating a, Ord a, Show a) => [(a,a)] -> [(a,a)] -> [(a,a)] -> Int -> [(a,a)]
+        kms points pre post iter
+            -- | (canstop pre post) = post
+            | (iter == 0) = post
+            | otherwise = (kmeansc points post (iter-1))
+    
+kmeans :: (Floating a, Ord a, Show a) => [(a,a)] -> Int -> ([[(a,a)]], [(a,a)])
+--kmeans points k = kmeansc points (take k points)
+kmeans points k = (b,a)
+    where
+        a = kmeansc points (take k points) 100
+        b = foldr (\ x r -> (init x):r) [] (kmeanse points a)
+-- a is the centroids and b is the points clustered by the centroids
+
 k_means :: Int -> [(Float,Float)] -> ([[(Float,Float)]],[(Float,Float)])
 k_means k points = ([[(1,2),(3,4),(0,0)],[(5,6),(7,8)]], [(3.4,5.6),(6.7,8.9)])
 
