@@ -73,7 +73,8 @@ kmeans points k = (b,a)
 -- a is the centroids and b is the points clustered by the centroids
 
 k_means :: Int -> [(Float,Float)] -> ([[(Float,Float)]],[(Float,Float)])
-k_means k points = ([[(1,2),(3,4),(0,0)],[(5,6),(7,8)]], [(3.4,5.6),(6.7,8.9)])
+k_means k points = kmeans points k
+-- ([[(1,2),(3,4),(0,0)],[(5,6),(7,8)]], [(3.4,5.6),(6.7,8.9)])
 
 
 -- *********************************************************************
@@ -95,8 +96,8 @@ find_nearest_point' distance reference (point:points) index (min_index,min_dista
 
 -- Computes the distance between two points based on a norm function
 -- Eg. dist norm_2 a b computes the Euclidean distance between a and b
-dist :: ((Float,Float) -> Float) -> (Float,Float) -> (Float,Float) -> Float
-dist norm (a_x,a_y) (b_x,b_y) = norm (a_x-b_x,a_y-b_y)
+dist2 :: ((Float,Float) -> Float) -> (Float,Float) -> (Float,Float) -> Float
+dist2 norm (a_x,a_y) (b_x,b_y) = norm (a_x-b_x,a_y-b_y)
 
 -- Computes a centroid based on a dimension aggregator and a list of points
 -- Eg. centroid mean points computes the average centroid of points
